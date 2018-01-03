@@ -217,11 +217,12 @@ async def joi_scrape_r6(message, client):
             soup = BeautifulSoup(sourceCode, 'html.parser')
             stat_value = soup.find('div', text=stat).find_next_siblings('div')
             stats.append(stat_value[0].get_text().replace('\n', ''))
-
-        stat_list.reverse()    
+  
         reply = 'Här är dina stats i Rainbow6:\n'
+        i = 0
         for item in stats:
-            reply = reply + stat_list.pop(0) + ': ' + item + '\n'
+            reply = reply + stat_list[i] + ': ' + item + '\n'
+            i = i + 1
 
     else:
         reply = 'Jag tror inte jag hänger med. Du kan prova med t.ex kills eller deaths.'
