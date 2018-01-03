@@ -37,7 +37,9 @@ soundDict = {
     'isis' : 'Saleel_Sawarim.mp3',
     'sad' : 'sadtrombone.mp3',
     'haha' : 'haha.mp3',
-    'dun' : 'DUN_DUN.mp3'
+    'dun' : 'DUN_DUN.mp3',
+    'clues' : 'clues.mp3',
+    'clue' : 'clues.mp3'
 }
 ubiDict = {
     '246342885853626369' : 'Beasterino',
