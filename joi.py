@@ -2,7 +2,12 @@ import discord
 import asyncio
 import random
 import time
+import operator
 import threading
+import urllib.request as urlRequest
+import urllib.parse as urlParse
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
 from discord.ext import commands
 
 if not discord.opus.is_loaded():
@@ -18,7 +23,7 @@ hereArr = [' ska vara här', ' är här... nånstans :3', ' bör vara här', ' l
 awayAnswers = [' är inte här i alla fall', ' lagar mat eller nått', ' kommer nog snart hoppas jag', ' verkar vara AFK :/'];
 goneBeginAnswers = ['Jag har inte sett ', 'Jag har inte hört från '];
 goneEndAnswers = [' på ett tag. Sorri :3', ' på en stund.', ' på evigheter... Suck.'];
-deleteArr = ['Jag såg dig allt ;)', 'Vad försökte du dölja nu?', 'Joi remembers', 'Jag kan hålla en hemlighet']
+deleteArr = ['Jag såg dig allt ;)', 'Vad försökte du dölja nu?', 'I remember all', 'Jag kan hålla en hemlighet']
 wowArr = ['Det suger...', 'Det är bara töntar som spelar WoW.' ,'2004 ringde. De vill ha tillbaka sitt spel.', 'Saker jag hellre skulle göra än att spela WoW: dränka kattungar', 'Wow? Hörde att Viktor spelar på RP-servrar', "WoW? Det är som Runescape va? Fast sämre?"];
 welcomeArr = ['Hej hej ', 'Tjo ', 'Hallå ', 'Hejsan ', 'Tja ']
 sleepArr = ['Jag sover redan, stör mig inte :<', 'Zzzzzz', '*gäsp* vad vill du ens?'];
@@ -30,9 +35,16 @@ foodArr = ['\U0001F35E', '\U0001F356', '\U0001F9C0', '\U0001F357', '\U0001F969',
 soundDict = {
     'drum' : 'joke_drum_effect.mp3',
     'isis' : 'Saleel_Sawarim.mp3',
-
 }
-
+ubiDict = {
+    '246342885853626369' : 'Beasterino',
+    '246357307661746176' : 'DameValerie',
+    '185110609216405504' : 'Netstroyer',
+    '246362414436712449' : 'hjortronhatt',
+    '246343288422924288' : 'KaptenStjert',
+    '114389410069479424' : 'Pooze',
+    '169075098257457152' : 'ThaC0w'
+}
 global server
 global localVoiceClient
 localVoiceClient = None
@@ -131,7 +143,88 @@ async def joi_reddit(message, client):
     await client.send_message(message.channel, 'Här: ' + reply)
 
 async def joi_help(message, client):
-    await client.send_message(message.channel, 'Jag kan göra massa roliga saker! Bara skriv mitt namn och ett kommatecken följt av något av detta:\n* test - räkna meddelanden i en session. \n* var är @<user> - kollar var folk är. \n* kom; här - Om du vill ha in mig i din röstkanal. \n* sov; stick; dra - Om du vill att jag ska lämna din röstkanal. \n* play <drum, isis> - Om du vill ha en punchline ;) \n* roll, rulla <dice> - Om du vill att jag ska rulla lite tärningar. Ex: roll 3d6 4d10. \n* wiki me, reddit me - Om du vill ha en länk till en wikipediasida eller en subreddit. Ex: reddit me sweden.')
+    await client.send_message(message.channel, 'Jag kan göra massa roliga saker! Bara skriv mitt namn och ett kommatecken följt av något av detta:\n* test - räkna meddelanden i en session. \n* var är @<user> - kollar var folk är. \n* kom; här - Om du vill ha in mig i din röstkanal. \n* sov; stick; dra - Om du vill att jag ska lämna din röstkanal. \n* play <drum, isis> - Om du vill ha en punchline ;) \n* roll, rulla <dice> - Om du vill att jag ska rulla lite tärningar. Ex: roll 3d6 4d10. \n* wiki me, reddit me - Om du vill ha en länk till en wikipediasida eller en subreddit. Ex: reddit me sweden. \n* news - Om du vill se seanste nytt.')
+
+async def joi_scrape_news(message, client):
+    data = []
+    articles = []
+    quote_page = ['https://www.expressen.se/', 'https://www.aftonbladet.se/', 'https://www.dn.se/', 'https://www.svd.se/']
+    for pg in quote_page:
+        page = urlopen(pg)
+        soup = BeautifulSoup(page, 'html.parser')
+        title_div = soup.find_all(['h2', 'h3'])
+        for hd in title_div:
+            article = hd.get_text()
+            if len(article) > 15:
+                data.append(article)
+                break
+    reply = 'Senaste nytt: \n**SvD**: ' + data.pop() + '\n**DN**: ' + data.pop() + '\n**Aftonbladet:** ' + data.pop() + '\n**Expressen:** ' + data.pop()
+    await client.send_message(message.channel, reply)
+
+async def joi_scrape_r6(message, client):
+    
+    statDict = {
+    'kills' : 'Kills',
+    'deaths' : 'Deaths',
+    'kd' : 'K/D',
+    'k/d' : 'K/D',
+    'playtime' : 'Playtime',
+    'record' : 'Record',
+    'win' : 'Win %',
+    '%' : 'Win %',
+    'mystats' : 'myStats',
+    'mystats' : 'myStats'
+    }
+
+    stats = []
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"}
+    stat_list = ['Kills', 'Deaths', 'K/D', 'Playtime', 'Record', 'Win %']
+    reply = ''
+
+    with open('players.txt') as f:
+        player_list = f.readlines()
+    player_list = [x.strip() for x in player_list] 
+
+    stat_type = statDict.get(message.content.split(' ')[1])
+
+    if stat_type != 'myStats':
+        for player in player_list:
+            quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
+            req = urlRequest.Request(quote_page, headers = headers)
+            url = urlRequest.urlopen(req)
+            sourceCode = url.read()
+            soup = BeautifulSoup(sourceCode, 'html.parser')
+            stat_value = soup.find('div', text=stat_type).find_next_siblings('div')
+            stats.append((player, stat_value[0].get_text().replace('\n', '')))
+
+        stats.sort(key=operator.itemgetter(1), reverse = True)
+
+        reply = 'Jag hörde att du ville ha lite statistik' + '[' + stat_type + '] :\n'     
+        for item in stats:
+            reply = reply + item[0] + ': ' + item[1] + '\n'
+
+    elif stat_type == 'myStats':
+        player = ubiDict.get(message.author.id)
+        for stat in stat_list:
+            print(stat)
+            quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
+            req = urlRequest.Request(quote_page, headers = headers)
+            url = urlRequest.urlopen(req)
+            sourceCode = url.read()
+            soup = BeautifulSoup(sourceCode, 'html.parser')
+            stat_value = soup.find('div', text=stat).find_next_siblings('div')
+            stats.append(stat_value[0].get_text().replace('\n', ''))
+
+        stat_list.reverse()    
+        reply = 'Här är dina stats i Rainbow6:\n'
+        for item in stats:
+            reply = reply + stat_list.pop(0) + ': ' + item + '\n'
+
+    else:
+        reply = 'Jag tror inte jag hänger med. Du kan prova med t.ex kills eller deaths.'
+
+    await client.send_message(message.channel, reply)
+
 
 responseDict = {
     'test' : joi_test,
@@ -150,7 +243,10 @@ responseDict = {
     'reddit' : joi_reddit,
     'help' : joi_help,
     'halp' : joi_help,
-    'hjälp' : joi_help
+    'hjälp' : joi_help,
+    'news' : joi_scrape_news,
+    'nyheter' : joi_scrape_news,
+    'r6' : joi_scrape_r6
 }
 
 client = discord.Client()
