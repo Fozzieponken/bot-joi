@@ -18,9 +18,13 @@ List of commands: (to call the bot, start your message with 'joi, ')
 - roll *dice* - Rolls a dice simulation, e.g. "joi, roll 4d6 1d8"
 - wiki me, reddit me *article/subreddit* - Returns a link to that subreddit or wikipedia article. 
 - news - Returns some news article headers.
+- r6 *stat* - Returns some stats from R6
 
 Current sounds and alias: 
 - Sad Drumroll - drum
 - Saleel Sawarim - isis
+- DUN DUN - dun
+- Sad Trombone - sad
+- Haha - haha
 
 TODO: Add more features, add more sounds, maybe add fuzzy search, update code to match PEP8 style guide
