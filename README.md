@@ -17,6 +17,7 @@ List of commands: (to call the bot, start your message with 'joi, ')
 - play *sound* - If not already in your current voice channel, go to that channel before playing the input sound
 - roll *dice* - Rolls a dice simulation, e.g. "joi, roll 4d6 1d8"
 - wiki me, reddit me *article/subreddit* - Returns a link to that subreddit or wikipedia article. 
+- news - Returns some news article headers.
 
 Current sounds and alias: 
 - Sad Drumroll - drum
