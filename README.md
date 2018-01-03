@@ -3,6 +3,10 @@ A random Discord bot for silly stuff.
 
 In order to run the audio parts of this bot, you need to install FFMPEG which can be found at https://www.ffmpeg.org/. 
 
+Other dependencies:
+- bs4 BeautifulSoup (py -m pip install BeautifulSoup4)
+- Rapptz/discord.py (py -m pip install -U discord.py[voice])
+
 Current features:  
 - Reacts to certain phrases and words with emojis and replies
 - Can join and disconnect from voice serves in order to play sounds
