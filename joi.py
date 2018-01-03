@@ -35,6 +35,9 @@ foodArr = ['\U0001F35E', '\U0001F356', '\U0001F9C0', '\U0001F357', '\U0001F969',
 soundDict = {
     'drum' : 'joke_drum_effect.mp3',
     'isis' : 'Saleel_Sawarim.mp3',
+    'sad' : 'sadtrombone.mp3',
+    'haha' : 'haha.mp3',
+    'dun' : 'DUN_DUN.mp3'
 }
 ubiDict = {
     '246342885853626369' : 'Beasterino',
