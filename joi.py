@@ -29,6 +29,7 @@ welcomeArr = ['Hej hej ', 'Tjo ', 'Hallå ', 'Hejsan ', 'Tja ']
 sleepArr = ['Jag sover redan, stör mig inte :<', 'Zzzzzz', '*gäsp* vad vill du ens?'];
 joiArr = ['Pratar ni om mig?', 'Hörde jag mitt namn?', 'Here to serve :)', ':notes: You know my name, you know my name :musical_note:', 'Hej hej', 'Vad kan jag stå till tjänst med idag?', ":o"];
 dogeArr = ['doge', 'doge2']
+teamArr = ['Klart!', 'Är det dags att visa vem som bestämmer?', 'Lite rivalitet har ingen dött av.', 'Lycka till!', 'Må bästa laget vinna :D', 'Lova att inte bråka för mycket nu :3']
 bladrunnerArr = ['Do you like our owl?', 'Is this testing whether I\'m a Replicant or a lesbian, Mr. Deckard?', 'Replicants are like any other machine. They\'re either a benefit or a hazard. If they\'re a benefit, it\'s not my problem.', 'Nothing is worse than having an itch you can never scratch.', 'I\'ve seen things you people wouldn\'t believe', 'All those ... moments will be lost in time, like tears...in rain.', ' Sometimes to love someone, you got to be a stranger.', '4 symbols make a man: A, T, G & C. I am only two: 1 and 0.', 'You look like a *good* Joe.',  'I\'ve never seen a tree. It\'s pretty.'];
 foodArr = ['\U0001F35E', '\U0001F356', '\U0001F9C0', '\U0001F357', '\U0001F969', '\U0001F953', '\U0001F354', '\U0001F355', '\U0001F96A', '\U0001F32E', '\U0001F32F', '\U0001F959', '\U0001F373', '\U0001F958', '\U0001F372', '\U0001F963', '\U0001F957', '\U0001F371', '\U0001F961', '\U0001F375'];
 
@@ -53,6 +54,8 @@ ubiDict = {
 global server
 global localVoiceClient
 localVoiceClient = None
+global lock
+lock = False
 
 async def joi_test(message, client):  
     tmp = await client.send_message(message.channel, 'Räknar meddelanden...')
@@ -98,7 +101,6 @@ async def joi_sleep(message, client):
         await client.send_message(message.channel, reply)
 
 async def joi_play(message, client):
-    print(message.content)
     sound = soundDict.get(message.content.split(' ')[1])
     global localVoiceClient
     global server
@@ -148,7 +150,7 @@ async def joi_reddit(message, client):
     await client.send_message(message.channel, 'Här: ' + reply)
 
 async def joi_help(message, client):
-    await client.send_message(message.channel, 'Jag kan göra massa roliga saker! Bara skriv mitt namn och ett kommatecken följt av något av detta:\n* test - räkna meddelanden i en session. \n* var är @<user> - kollar var folk är. \n* kom; här - Om du vill ha in mig i din röstkanal. \n* sov; stick; dra - Om du vill att jag ska lämna din röstkanal. \n* play <drum, isis> - Om du vill ha en punchline ;) \n* roll, rulla <dice> - Om du vill att jag ska rulla lite tärningar. Ex: roll 3d6 4d10. \n* wiki me, reddit me - Om du vill ha en länk till en wikipediasida eller en subreddit. Ex: reddit me sweden. \n* news - Om du vill se seanste nytt.')
+    await client.send_message(message.channel, 'Jag kan göra massa roliga saker! Bara skriv mitt namn och ett kommatecken följt av något av detta:\n* test - räkna meddelanden i en session. \n* var är @<user> - kollar var folk är. \n* kom; här - Om du vill ha in mig i din röstkanal. \n* sov; stick; dra - Om du vill att jag ska lämna din röstkanal. \n* play <drum, isis, haha, dun, clues, sad> - Om du vill ha en punchline ;) \n* roll, rulla <dice> - Om du vill att jag ska rulla lite tärningar. Ex: roll 3d6 4d10. \n* wiki me, reddit me - Om du vill ha en länk till en wikipediasida eller en subreddit. Ex: reddit me sweden. \n* news - Om du vill se seanste nytt. \n* r6 <stat> - Om du vill se stats för Rainbow6, t.ex kills, deaths, kd eller mystats. \n* teams - Dela in alla spelare i den nuvarande röstkanalen i två olika lag.')
 
 async def joi_scrape_news(message, client):
     data = []
@@ -190,9 +192,8 @@ async def joi_scrape_r6(message, client):
         player_list = f.readlines()
     player_list = [x.strip() for x in player_list] 
 
-    stat_type = statDict.get(message.content.split(' ')[1])
-
-    if stat_type != 'myStats':
+    stat_type = statDict.get(message.content.split(' ')[1])  
+    if stat_type != 'myStats' and stat_type != None:
         for player in player_list:
             quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
             req = urlRequest.Request(quote_page, headers = headers)
@@ -200,18 +201,17 @@ async def joi_scrape_r6(message, client):
             sourceCode = url.read()
             soup = BeautifulSoup(sourceCode, 'html.parser')
             stat_value = soup.find('div', text=stat_type).find_next_siblings('div')
-            stats.append((player, stat_value[0].get_text().replace('\n', '')))
+            stats.append((player, int(stat_value[0].get_text().replace('\n', ''))))
 
         stats.sort(key=operator.itemgetter(1), reverse = True)
 
         reply = 'Jag hörde att du ville ha lite statistik' + '[' + stat_type + '] :\n'     
         for item in stats:
-            reply = reply + item[0] + ': ' + item[1] + '\n'
+            reply = reply + item[0] + ': ' + str(item[1]) + '\n'
 
     elif stat_type == 'myStats':
         player = ubiDict.get(message.author.id)
         for stat in stat_list:
-            print(stat)
             quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
             req = urlRequest.Request(quote_page, headers = headers)
             url = urlRequest.urlopen(req)
@@ -219,16 +219,87 @@ async def joi_scrape_r6(message, client):
             soup = BeautifulSoup(sourceCode, 'html.parser')
             stat_value = soup.find('div', text=stat).find_next_siblings('div')
             stats.append(stat_value[0].get_text().replace('\n', ''))
-  
+        fav_op = soup.find('h3', attrs={'class': 'operator-name'})
+        fav_op = fav_op.text.strip().capitalize()
         reply = 'Här är dina stats i Rainbow6:\n'
         i = 0
         for item in stats:
-            reply = reply + stat_list[i] + ': ' + item + '\n'
+            reply = reply + '**' + stat_list[i] + ': **' + item + '\n'
             i = i + 1
-
+        reply = reply + '**Favourite operator: **' + fav_op    
     else:
-        reply = 'Jag tror inte jag hänger med. Du kan prova med t.ex kills eller deaths.'
+        reply = 'Jag tror inte jag hänger med. Du kan prova med t.ex kills, deaths eller mystats.'
 
+    await client.send_message(message.channel, reply)
+
+async def joi_scrape_joke(message, client):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"}
+    joke = []
+    reply = ''
+    long_joke = True
+    #get a random joke from FP
+    page = 'https://www.reddit.com/r/Jokes/'
+    req = urlRequest.Request(page, headers = headers)
+    url = urlRequest.urlopen(req)
+    sourceCode = url.read()
+    soup = BeautifulSoup(sourceCode, 'html.parser')
+    title = soup.find_all('p', attrs={'class': 'title'})
+    title.pop(0)
+    #Choose one joke that is not tagged as long
+    while (long_joke):
+        post = random.choice(title)
+        flair = post.find('span', attrs={'title': 'Long'})
+        if (flair == None):
+            long_joke = False
+
+    post = post.find('a', attrs={'class': 'title'})
+    post = post.get('href')
+
+    #Go to joke page
+    page = 'https://www.reddit.com' + post
+    req = urlRequest.Request(page, headers = headers)
+    url = urlRequest.urlopen(req)
+    sourceCode = url.read()
+    soup = BeautifulSoup(sourceCode, 'html.parser')
+
+    #Grab header
+    joke_start = soup.find('p', attrs={'class': 'title'}).find('a', { "class" : "title" },recursive=False).text.strip()
+    joke.append(joke_start)
+    #Grab rest
+    joke_rest = soup.find('div', attrs={'class': 'expando'}).find_all('p')
+    for line in joke_rest:
+        line = line.text.replace('</p>', '')
+        line = line.replace('<p>', '')
+        joke.append(line)
+    for line in joke:
+        reply = reply + line + '\n'
+    await client.send_message(message.channel, reply)
+
+async def joi_teams(message, client):
+    current_vc = discord.utils.find(lambda m: m.id == message.author.id, server.members).voice.voice_channel
+    new_team_vc = None
+    number_of_players = len(current_vc.voice_members)
+    new_team_text = []
+    if number_of_players % 2 != 0:
+        await client.send_message(message.channel, 'Men ni är ju inte ett jämnt antal :<')
+        return
+    for ch in server.channels:
+        if ch.type == discord.ChannelType.voice and ch.voice_members == []:
+            new_team_vc = ch
+            break
+    halved = number_of_players/2
+    members_copy = current_vc.voice_members.copy()
+    while (number_of_players != halved):
+        mem_to_move = members_copy.pop(random.randint(0, number_of_players-1))
+        new_team_text.append(mem_to_move)
+        #await client.move_member(mem_to_move, new_team_vc)
+        number_of_players = number_of_players-1
+    for mem in members_copy:
+        team1 = mem.name + '\n'
+    for mem in  new_team_text:
+        team2 = mem.name + '\n'
+    #await client.send_message(message.channel, random.choice(teamArr))
+    reply = '**Lag 1: **\n' + team1 + '**Lag 2: **\n' + team2
     await client.send_message(message.channel, reply)
 
 
@@ -252,7 +323,10 @@ responseDict = {
     'hjälp' : joi_help,
     'news' : joi_scrape_news,
     'nyheter' : joi_scrape_news,
-    'r6' : joi_scrape_r6
+    'r6' : joi_scrape_r6,
+    'lag' : joi_teams,
+    'teams' : joi_teams,
+    'joke' : joi_scrape_joke
 }
 
 client = discord.Client()
@@ -269,6 +343,11 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    global lock
+    if lock: 
+        return
+
+    lock = True
     message.content = message.content.lower()
 
     if message.content.find('game') > -1:
@@ -302,9 +381,10 @@ async def on_message(message):
         if response is not None:
         	await response(message, client)
 
-    elif message.content.find('joi') > -1:
+    elif message.content.find('joi') > -1 and message.author.id != '386139218885476352':
         reply = random.choice(joiArr)
         await client.send_message(message.channel, reply)
+    lock = False
 
 @client.event
 async def on_message_delete(message):
