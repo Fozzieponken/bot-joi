@@ -280,6 +280,8 @@ async def joi_teams(message, client):
     new_team_vc = None
     number_of_players = len(current_vc.voice_members)
     new_team_text = []
+    team1 = ''
+    team2 = ''
     if number_of_players % 2 != 0:
         await client.send_message(message.channel, 'Men ni är ju inte ett jämnt antal :<')
         return
@@ -289,15 +291,16 @@ async def joi_teams(message, client):
             break
     halved = number_of_players/2
     members_copy = current_vc.voice_members.copy()
+
     while (number_of_players != halved):
         mem_to_move = members_copy.pop(random.randint(0, number_of_players-1))
         new_team_text.append(mem_to_move)
         #await client.move_member(mem_to_move, new_team_vc)
         number_of_players = number_of_players-1
     for mem in members_copy:
-        team1 = mem.name + '\n'
-    for mem in  new_team_text:
-        team2 = mem.name + '\n'
+        team1 = team1 + mem.name + '\n'
+    for mem in new_team_text:
+        team2 = team2 + mem.name + '\n'
     #await client.send_message(message.channel, random.choice(teamArr))
     reply = '**Lag 1: **\n' + team1 + '**Lag 2: **\n' + team2
     await client.send_message(message.channel, reply)
