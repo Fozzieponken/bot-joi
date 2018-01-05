@@ -4,11 +4,13 @@ import random
 import time
 import operator
 import threading
+import r6sapi
 import urllib.request as urlRequest
 import urllib.parse as urlParse
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from discord.ext import commands
+
 
 if not discord.opus.is_loaded():
 	# the 'opus' library here is opus.dll on windows
@@ -150,7 +152,8 @@ async def joi_reddit(message, client):
     await client.send_message(message.channel, 'Här: ' + reply)
 
 async def joi_help(message, client):
-    await client.send_message(message.channel, 'Jag kan göra massa roliga saker! Bara skriv mitt namn och ett kommatecken följt av något av detta:\n* test - räkna meddelanden i en session. \n* var är @<user> - kollar var folk är. \n* kom; här - Om du vill ha in mig i din röstkanal. \n* sov; stick; dra - Om du vill att jag ska lämna din röstkanal. \n* play <drum, isis, haha, dun, clues, sad> - Om du vill ha en punchline ;) \n* roll, rulla <dice> - Om du vill att jag ska rulla lite tärningar. Ex: roll 3d6 4d10. \n* wiki me, reddit me - Om du vill ha en länk till en wikipediasida eller en subreddit. Ex: reddit me sweden. \n* news - Om du vill se seanste nytt. \n* r6 <stat> - Om du vill se stats för Rainbow6, t.ex kills, deaths, kd eller mystats. \n* teams - Dela in alla spelare i den nuvarande röstkanalen i två olika lag.')
+    reply = ''
+    await client.send_message(message.channel, 'Här: ' + reply)
 
 async def joi_scrape_news(message, client):
     data = []
@@ -168,69 +171,111 @@ async def joi_scrape_news(message, client):
     reply = 'Senaste nytt: \n**SvD**: ' + data.pop() + '\n**DN**: ' + data.pop() + '\n**Aftonbladet:** ' + data.pop() + '\n**Expressen:** ' + data.pop()
     await client.send_message(message.channel, reply)
 
-async def joi_scrape_r6(message, client):
-    
-    statDict = {
-    'kills' : 'Kills',
-    'deaths' : 'Deaths',
-    'kd' : 'K/D',
-    'k/d' : 'K/D',
-    'playtime' : 'Playtime',
-    'record' : 'Record',
-    'win' : 'Win %',
-    '%' : 'Win %',
-    'mystats' : 'myStats',
-    'mystats' : 'myStats'
+
+async def get_kills(player):
+    return player.ranked.kills
+
+async def get_deaths(player):
+    return player.ranked.deaths
+
+async def get_revives(player):
+    return player.revives
+
+async def get_melee(player):
+    return player.melee_kills
+
+async def get_assists(player):
+    return player.kill_assists
+
+async def get_kd(player):
+    return round((player.ranked.kills / player.ranked.deaths), 3) 
+
+async def get_playtime(player):
+    return str(round((player.ranked.time_played/3600), 2)) + 'h'
+
+async def get_record(player):
+    return str(player.ranked.won) +' - ' + str(player.ranked.lost)
+
+async def get_win(player):
+    return str(round((player.ranked.won/player.ranked.lost), 3)) + '%'
+
+async def get_favop(player, stat):
+
+    parameterDictionary = {
+    'playtime' : lambda p : p.time_played,
+    'melee' : lambda p : p.melees,
+    'kills' : lambda p : p.kills,
+    'deaths' : lambda p : p.deaths,
+    'wins' :  lambda p : p.wins
     }
 
-    stats = []
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"}
-    stat_list = ['Kills', 'Deaths', 'K/D', 'Playtime', 'Record', 'Win %']
+    await player.load_all_operators()
+
+    most_played = max(player.operators.values(), key = parameterDictionary.get(stat, lambda p : p.time_played))
+
+
+    return most_played.name.capitalize()
+
+async def joi_r6_stats(message, client):
+
+    r6statDict = {
+    'assists' : get_assists,
+    'revives' : get_revives,
+    'melee' : get_melee,
+    'kills' : get_kills,
+    'deaths' : get_deaths,
+    'kd' : get_kd,
+    'playtime' : get_playtime,
+    'record' : get_record,
+    'win' :  get_win,
+    'favop' : get_favop
+    }
     reply = ''
+    player_list = []
+    stat_list = ['Kills', 'Deaths', 'K/D', 'Playtime', 'Record', 'Win %']
+    stat_type = message.content.split(' ')[1]
 
+#Read credentials and players from external documents
+    with open('uplaycred.txt', 'r') as f:
+        credentials = f.readlines()
+    credentials = [x.strip() for x in credentials] 
     with open('players.txt') as f:
-        player_list = f.readlines()
-    player_list = [x.strip() for x in player_list] 
+        player_names = f.readlines()
+    player_names = [x.strip() for x in player_names] 
 
-    stat_type = statDict.get(message.content.split(' ')[1])  
-    if stat_type != 'myStats' and stat_type != None:
-        for player in player_list:
-            quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
-            req = urlRequest.Request(quote_page, headers = headers)
-            url = urlRequest.urlopen(req)
-            sourceCode = url.read()
-            soup = BeautifulSoup(sourceCode, 'html.parser')
-            stat_value = soup.find('div', text=stat_type).find_next_siblings('div')
-            stats.append((player, int(stat_value[0].get_text().replace('\n', ''))))
-
-        stats.sort(key=operator.itemgetter(1), reverse = True)
-
-        reply = 'Jag hörde att du ville ha lite statistik' + '[' + stat_type + '] :\n'     
-        for item in stats:
-            reply = reply + item[0] + ': ' + str(item[1]) + '\n'
-
-    elif stat_type == 'myStats':
-        player = ubiDict.get(message.author.id)
-        for stat in stat_list:
-            quote_page = 'https://r6stats.com/stats/uplay/' + player + '/ranked'
-            req = urlRequest.Request(quote_page, headers = headers)
-            url = urlRequest.urlopen(req)
-            sourceCode = url.read()
-            soup = BeautifulSoup(sourceCode, 'html.parser')
-            stat_value = soup.find('div', text=stat).find_next_siblings('div')
-            stats.append(stat_value[0].get_text().replace('\n', ''))
-        fav_op = soup.find('h3', attrs={'class': 'operator-name'})
-        fav_op = fav_op.text.strip().capitalize()
-        reply = 'Här är dina stats i Rainbow6:\n'
-        i = 0
-        for item in stats:
-            reply = reply + '**' + stat_list[i] + ': **' + item + '\n'
-            i = i + 1
-        reply = reply + '**Favourite operator: **' + fav_op    
+    if len(message.content.split(' ')) == 3:
+        second_paramter = message.content.split(' ')[2]
     else:
-        reply = 'Jag tror inte jag hänger med. Du kan prova med t.ex kills, deaths eller mystats.'
+        second_paramter = ''
 
+    auth = r6sapi.Auth(credentials[0], credentials[1])
+
+#Get stats based on type
+    if stat_type != 'mystats' and stat_type != None:
+        stat_func = r6statDict.get(stat_type)
+        if stat_func == None:
+            await client.send_message(message.channel, 'Vad ville du veta sade du? Prova kills, deaths, assists, revives, melee, kd, playtime, record, win, favop eller mystats istället. :) ')
+            await auth.session.close()
+            return
+        for player in player_names:
+            acc = await auth.get_player(player, r6sapi.Platforms.UPLAY)
+            await acc.load_queues()
+            await acc.load_general()
+            if stat_type == 'favop':
+                player_list.append((player, await get_favop(acc, second_paramter)))
+            else:
+                player_list.append((player, await stat_func(acc)))
+        player_list.sort(key=operator.itemgetter(1), reverse = True)
+       
+
+#Create and return reply
+    reply = 'Jag hörde att du ville ha lite statistik ' + '[' + stat_type + '] :\n'     
+    for stat in player_list:
+        reply = reply + stat[0] + ' - ' + str(stat[1]) + '\n'
+    
+    await auth.session.close()
     await client.send_message(message.channel, reply)
+    return
 
 async def joi_scrape_joke(message, client):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"}
@@ -326,7 +371,7 @@ responseDict = {
     'hjälp' : joi_help,
     'news' : joi_scrape_news,
     'nyheter' : joi_scrape_news,
-    'r6' : joi_scrape_r6,
+    'r6' : joi_r6_stats,
     'lag' : joi_teams,
     'teams' : joi_teams,
     'joke' : joi_scrape_joke
