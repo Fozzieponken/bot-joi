@@ -107,16 +107,10 @@ async def joi_play(message, client):
     global localVoiceClient
     global server
     callUser = discord.utils.find(lambda m: m.id == message.author.id, server.members)
-    if localVoiceClient is None:
-        if callUser.voice.voice_channel is None:
-            await client.send_message(message.channel, 'Och var exakt hade du tänkt dig att det skulle ske?')
-            return
-        else:
-            localVoiceClient = await client.join_voice_channel(callUser.voice.voice_channel)
-    elif hasattr(message.author, 'voice'):
-        if localVoiceClient.channel != message.author.voice.voice_channel:
-            await localVoiceClient.disconnect()
-            localVoiceClient = await client.join_voice_channel(callUser.voice.voice_channel)  
+    if callUser.voice.voice_channel is None:
+        await client.send_message(message.channel, 'Du sitter ju inte ens i en röstkanal :/')
+        return
+    await joi_come(message, client)
     player = localVoiceClient.create_ffmpeg_player(sound)
     player.start()
 
