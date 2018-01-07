@@ -42,7 +42,8 @@ soundDict = {
     'haha' : 'haha.mp3',
     'dun' : 'DUN_DUN.mp3',
     'clues' : 'clues.mp3',
-    'clue' : 'clues.mp3'
+    'clue' : 'clues.mp3',
+    'x-files' : 'x-files.mp3'
 }
 ubiDict = {
     '246342885853626369' : 'Beasterino',
@@ -110,7 +111,11 @@ async def joi_play(message, client):
     if callUser.voice.voice_channel is None:
         await client.send_message(message.channel, 'Du sitter ju inte ens i en röstkanal :/')
         return
-    await joi_come(message, client)
+    if hasattr(localVoiceClient, 'channel'):
+        if localVoiceClient.channel != message.author.voice.voice_channel:
+            await joi_come(message, client)
+    else:
+        await joi_come(message, client)
     player = localVoiceClient.create_ffmpeg_player(sound)
     player.start()
 
