@@ -196,7 +196,7 @@ async def get_record(player):
     return str(player.ranked.won) +' - ' + str(player.ranked.lost)
 
 async def get_win(player):
-    return str(round((player.ranked.won/player.ranked.lost)*100, 3)) + '%'
+    return str(round((player.ranked.won/player.ranked.played)*100, 3)) + '%'
 
 def kd_calculator(kills, deaths):
     if deaths != 0:
@@ -229,7 +229,8 @@ async def joi_r6_stats(message, client):
     'kills' : [lambda p : p.kills, lambda p : p],
     'deaths' : [lambda p : p.deaths, lambda p: p],
     'melee' : [lambda p : p.melees, lambda p : p],
-    'win' :  [lambda p : kd_calculator(p.wins, p.losses), lambda p: str(round(p*100, 3)) + '%'],
+    'wins' :  [lambda p :  p.wins, lambda p : p],
+    'losses' : [lambda p: p.losses, lambda p : p],
     'kd' : [lambda p : kd_calculator(p.kills, p.deaths), lambda p: str(round(p, 3))]
     }
 
