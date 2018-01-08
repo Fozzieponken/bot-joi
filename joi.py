@@ -196,42 +196,45 @@ async def get_record(player):
     return str(player.ranked.won) +' - ' + str(player.ranked.lost)
 
 async def get_win(player):
-    return str(round((player.ranked.won/player.ranked.lost), 3)) + '%'
+    return str(round((player.ranked.won/player.ranked.lost)*100, 3)) + '%'
 
-async def get_favop(player, stat):
+def kd_calculator(kills, deaths):
+    if deaths != 0:
+        return kills/deaths 
+    else:
+        return 0
 
-    parameterDictionary = {
-    'playtime' : lambda p : p.time_played,
-    'melee' : lambda p : p.melees,
-    'kills' : lambda p : p.kills,
-    'deaths' : lambda p : p.deaths,
-    'wins' :  lambda p : p.wins
-    }
-
+async def get_favop(player, retriever = lambda p : p.time_played, converter = lambda p: str(round((p/3600), 2)) + 'h'):
     await player.load_all_operators()
-
-    most_played = max(player.operators.values(), key = parameterDictionary.get(stat, lambda p : p.time_played))
-
-
-    return most_played.name.capitalize()
+    most_played = max(player.operators.values(), key = retriever)
+    return most_played.name.capitalize() +' (' + str(converter(retriever(most_played))) +')'
 
 async def joi_r6_stats(message, client):
 
     r6statDict = {
+    'kills' : get_kills,
+    'deaths' : get_deaths,
     'assists' : get_assists,
     'revives' : get_revives,
     'melee' : get_melee,
-    'kills' : get_kills,
-    'deaths' : get_deaths,
     'kd' : get_kd,
     'playtime' : get_playtime,
     'record' : get_record,
     'win' :  get_win,
     'favop' : get_favop
     }
+
+    parameterDictionary = {
+    'playtime' : [lambda p : p.time_played, lambda p: str(round((p/3600), 2)) + 'h'],
+    'kills' : [lambda p : p.kills, lambda p : p],
+    'deaths' : [lambda p : p.deaths, lambda p: p],
+    'melee' : [lambda p : p.melees, lambda p : p],
+    'win' :  [lambda p : kd_calculator(p.wins, p.losses), lambda p: str(round(p*100, 3)) + '%'],
+    'kd' : [lambda p : kd_calculator(p.kills, p.deaths), lambda p: str(round(p, 3))]
+    }
+
     reply = ''
-    player_list = []
-    stat_list = ['Kills', 'Deaths', 'K/D', 'Playtime', 'Record', 'Win %']
+    result_list = []
     stat_type = message.content.split(' ')[1]
 
 #Read credentials and players from external documents
@@ -249,11 +252,12 @@ async def joi_r6_stats(message, client):
 
     auth = r6sapi.Auth(credentials[0], credentials[1])
 
+
 #Get stats based on type
     if stat_type != 'mystats' and stat_type != None:
         stat_func = r6statDict.get(stat_type)
         if stat_func == None:
-            await client.send_message(message.channel, 'Vad ville du veta sade du? Prova kills, deaths, assists, revives, melee, kd, playtime, record, win, favop eller mystats istället. :) ')
+            await client.send_message(message.channel, 'Vad ville du veta sade du? Prova kills, deaths, assists, revives, melee, kd, playtime, record, win, favop eller istället. :) ')
             await auth.session.close()
             return
         for player in player_names:
@@ -261,15 +265,37 @@ async def joi_r6_stats(message, client):
             await acc.load_queues()
             await acc.load_general()
             if stat_type == 'favop':
-                player_list.append((player, await get_favop(acc, second_paramter)))
+                funcs = parameterDictionary.get(second_paramter, parameterDictionary.get('playtime'))
+                retriever = funcs[0]
+                converter = funcs[1]
+                result_list.append((player, await get_favop(acc, retriever, converter)))
             else:
-                player_list.append((player, await stat_func(acc)))
-        player_list.sort(key=operator.itemgetter(1), reverse = True)
-       
+                result_list.append((player, await stat_func(acc)))
+
+        result_list.sort(key=operator.itemgetter(1), reverse = True)
+    else:
+        player = ubiDict.get(message.author.id)
+        acc = await auth.get_player(player, r6sapi.Platforms.UPLAY)
+        await acc.load_queues()
+        await acc.load_general()
+        if second_paramter == '':
+            for key, value in r6statDict.items():
+                result_list.append((key.capitalize(), await value(acc)))
+        else:
+            await acc.load_all_operators()
+            p_operator = acc.operators.get(second_paramter)
+            if p_operator == None:
+                await auth.session.close()
+                await client.send_message(message.channel, 'Det fanns ingen operator som hette sådär hörredu.')
+                return
+            for key, value in parameterDictionary.items():
+                result_list.append((key.capitalize(), str(value[1](value[0](p_operator)))))
+            result_list.append((p_operator.statistic_name, str(p_operator.statistic)))
+
 
 #Create and return reply
-    reply = 'Jag hörde att du ville ha lite statistik ' + '[' + stat_type + '] :\n'     
-    for stat in player_list:
+    reply = 'Jag hörde att du ville ha lite statistik ' + '[ ' + stat_type.capitalize() + ' ' + second_paramter.capitalize() + ' ] :\n'     
+    for stat in result_list:
         reply = reply + stat[0] + ' - ' + str(stat[1]) + '\n'
     
     await auth.session.close()
