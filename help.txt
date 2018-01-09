@@ -1,0 +1,17 @@
+Vad behöver du hjälp med? Jag kan göra massa skoj saker, bara skriv 'joi, ' följt av något av detta:
+ *test - räknar dina meddelanden i senaste sessionen
+ *hej - säg hej till mig
+ *var är <@user> - fråga mig var en användare är någonstans
+ *kom, här - kalla in mig i din röstkanal
+ *sov, stick, dra - få mig att hoppa ur din röstkanal
+ *play <drum, isis, sad, haha, dun, clues, x-files> - spela upp ett litet ljudklipp
+ *rulla, roll <xdy> - be mig rulla lite tärningar, ex 'rulla 2d6 1d8'
+ *wiki, reddit <article/sub> - få en direktlänk till en wikipediaartikel eller subreddit
+ *nyheter, news - få senaste nytt från svenska tidningar
+ *r6 <kills, deaths, assists, revives, melee, kd, playtime, record, win, favop, mystats> - få stats för Rainbow6: Siege
+ *r6 favop <playtime, kills, deaths, melee, wins, loses, kd> - få stats för för alla användares favoritoperator.
+ *r6 mystats <operator> - få dina stats för en speciell operator
+ *joke - om du vill att jag ska berätta ett skämt
+ *lag, team - om du vill att jag ska göra två lag av alla spelare i din röstkanal.
+ *gif <search> <0-25> - få den gif som bäst matchar ditt sökord. Om du inte vill ha en specifik gif bland sökresultaten får du en av de fem bästa. 
+ *hs <card> - få tillbaka ett kort från Hearthstone

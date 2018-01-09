@@ -5,11 +5,17 @@ import time
 import operator
 import threading
 import r6sapi
+import json
+import giphy_client
+import requests
+import json
+from giphy_client.rest import ApiException
 import urllib.request as urlRequest
 import urllib.parse as urlParse
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from discord.ext import commands
+
 
 
 if not discord.opus.is_loaded():
@@ -151,8 +157,9 @@ async def joi_reddit(message, client):
     await client.send_message(message.channel, 'Här: ' + reply)
 
 async def joi_help(message, client):
-    reply = ''
-    await client.send_message(message.channel, 'Här: ' + reply)
+    with open('help.txt', 'r') as f:
+        help_text = f.read()
+    await client.send_message(message.channel, 'Här: ' + help_text)
 
 async def joi_scrape_news(message, client):
     data = []
@@ -376,6 +383,62 @@ async def joi_teams(message, client):
     reply = '**Lag 1: **\n' + team1 + '**Lag 2: **\n' + team2
     await client.send_message(message.channel, reply)
 
+async def joi_giphy(message, client): 
+
+    in_data = message.content.split(' ')
+   
+    if len(in_data) > 1:
+        query = in_data[1] # str | Search query term or prhase.
+    else:
+        await client.send_message(message.channel, 'Vad vill du ha en gif på?')
+        return
+    if len(in_data) == 3:
+        r = int(in_data[2])
+    else:
+        r = random.randint(0, 4)
+
+    # create an instance of the API class
+    api_instance = giphy_client.DefaultApi()
+    api_key = 'dc6zaTOxFJmzC' # str | Giphy API Key.
+    limit = 25 # int | The maximum number of records to return. (optional) (default to 25)
+    offset = 0 # int | An optional results offset. Defaults to 0. (optional) (default to 0)
+    rating = 'g' # str | Filters results by specified rating. (optional)
+    lang = 'en' # str | Specify default country for regional content; use a 2-letter ISO 639-1 country code. See list of supported languages <a href = \"../language-support\">here</a>. (optional)
+    fmt = 'json' # str | Used to indicate the expected response format. Default is Json. (optional) (default to json)
+
+    try: 
+        # Search Endpoint
+        api_response = api_instance.gifs_search_get(api_key, query, limit=limit, offset=offset, rating=rating, lang=lang, fmt=fmt)
+    except ApiException as e:
+        print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
+        await client.send_message(message.channel, 'Oooops. Nått gick snett på andra sidan.')
+        return
+
+    gif_images = api_response.data.pop(r)
+
+    await client.send_message(message.channel, gif_images.embed_url)
+
+async def joi_hearthstone(message, client): 
+    card = message.content[3:]
+    if card == '':
+        await client.send_message(message.channel, 'Vilket kort letade du efter sade du?')
+        return
+
+    with open('hskey.txt', 'r') as f:
+        key = f.readline()
+
+    req = requests.get('https://omgvamp-hearthstone-v1.p.mashape.com/cards/' + card, headers={"X-Mashape-Key": key, "Accept": "application/json"})
+    card_url = req.json()
+    
+    try:
+        card_url = card_url[-1].get('img')     
+    except Exception as e:
+        print("Exception when calling DefaultApi->card_search_get: %s\n" % e)
+        await client.send_message(message.channel, 'Oooops. Jag hittade inget kort som hette så.')
+        return
+
+    await client.send_message(message.channel, card_url)
+
 
 responseDict = {
     'test' : joi_test,
@@ -400,7 +463,10 @@ responseDict = {
     'r6' : joi_r6_stats,
     'lag' : joi_teams,
     'teams' : joi_teams,
-    'joke' : joi_scrape_joke
+    'joke' : joi_scrape_joke,
+    'gif' : joi_giphy,
+    'hs' : joi_hearthstone
+
 }
 
 client = discord.Client()
@@ -423,8 +489,9 @@ async def on_message(message):
 
     lock = True
     message.content = message.content.lower()
+    randMess = random.randint(0, 7)
 
-    if message.content.find('game') > -1:
+    if message.content.find('game') > -1 and randMess == 1:
         reply = random.choice(gejmArr)
         await client.send_message(message.channel, reply)
 
@@ -454,8 +521,10 @@ async def on_message(message):
 
         if response is not None:
         	await response(message, client)
+        elif randMess == 4:
+            await client.send_message(message.channel, 'Det verkar som du ville mig något, men jag förstod inte riktigt. Du kan alltid prova att skriva help :)')
 
-    elif message.content.find('joi') > -1 and message.author.id != '386139218885476352':
+    elif message.content.find('joi') > -1 and message.author.id != '386139218885476352' and randMess == 1:
         reply = random.choice(joiArr)
         await client.send_message(message.channel, reply)
     lock = False
@@ -470,6 +539,6 @@ async def on_member_join(member):
     reply = 'Hej hej ' + member.name + '! :)'
     await client.send_message(member.server.get_channel('246343097611583488'), reply)
 
-with open('key.txt', 'r') as f:
+with open('discordkey.txt', 'r') as f:
     key = f.readline()
 client.run(key)
