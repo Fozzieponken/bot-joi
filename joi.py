@@ -49,7 +49,10 @@ soundDict = {
     'dun' : 'DUN_DUN.mp3',
     'clues' : 'clues.mp3',
     'clue' : 'clues.mp3',
-    'x-files' : 'x-files.mp3'
+    'x-files' : 'x-files.mp3',
+    'spaghet' : 'spaghet.mp3',
+    'spaghett' : 'spaghet.mp3',
+    'spaget' : 'spaghet.mp3',
 }
 ubiDict = {
     '246342885853626369' : 'Beasterino',
