@@ -6,6 +6,7 @@ In order to run the audio parts of this bot, you need to install FFMPEG which ca
 Other dependencies:
 - bs4 BeautifulSoup (py -m pip install BeautifulSoup4)
 - Rapptz/discord.py (py -m pip install -U discord.py[voice])
+- Requests (py -m pip install requests)
 
 Current features:  
 - Reacts to certain phrases and words with emojis and replies
