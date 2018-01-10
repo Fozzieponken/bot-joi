@@ -7,6 +7,8 @@ Other dependencies:
 - bs4 BeautifulSoup (py -m pip install BeautifulSoup4)
 - Rapptz/discord.py (py -m pip install -U discord.py[voice])
 - Requests (py -m pip install requests)
+- Giphy_client (py -m pip install giphy_client)
+- billy-yoyo/RainbowSixSiege-Python-API (py -m install r6sapi)
 
 Current features:  
 - Reacts to certain phrases and words with emojis and replies
