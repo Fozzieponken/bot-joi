@@ -422,7 +422,17 @@ async def joi_giphy(message, client):
     await client.send_message(message.channel, gif_images.embed_url)
 
 async def joi_hearthstone(message, client): 
-    card = message.content[3:]
+    input = message.content[3:]
+
+    if input[0:3] == 'sök' or input[0:6] == 'search':
+        card = input.split(' ')[1]
+        endpoint = 'https://omgvamp-hearthstone-v1.p.mashape.com/cards/search/'
+        search = True
+    else:
+        card = input
+        endpoint = 'https://omgvamp-hearthstone-v1.p.mashape.com/cards/'
+        search = False
+
     if card == '':
         await client.send_message(message.channel, 'Vilket kort letade du efter sade du?')
         return
@@ -430,18 +440,44 @@ async def joi_hearthstone(message, client):
     with open('hskey.txt', 'r') as f:
         key = f.readline()
 
-    req = requests.get('https://omgvamp-hearthstone-v1.p.mashape.com/cards/' + card, headers={"X-Mashape-Key": key, "Accept": "application/json"})
+    req = requests.get(endpoint + card, headers={"X-Mashape-Key": key, "Accept": "application/json"})
     card_url = req.json()
-    
+
     try:
-        card_url = card_url[-1].get('img')     
+        if search:
+            reply = 'Jag hittade följande kort: \n'
+            for _, element in zip(range(10), card_url):
+               reply += element.get('name') + '\n'
+            if len(card_url) > 10:
+                reply += 'plus ' + str((len(card_url)) - 10) + ' andra kort'
+        else:
+            reply = card_url[-1].get('img')
     except Exception as e:
         print("Exception when calling DefaultApi->card_search_get: %s\n" % e)
-        await client.send_message(message.channel, 'Oooops. Jag hittade inget kort som hette så.')
+        await client.send_message(message.channel, 'Oooops. Jag hittade inget som hette så.')
         return
 
-    await client.send_message(message.channel, card_url)
+    await client.send_message(message.channel, reply)
 
+async def joi_klunsa(message, client):
+    moves = {
+    'sten': 'sax',
+    'sax' : 'påse',
+    'påse' : 'sten'
+    }
+    user_move = message.content
+    joi_move = random.choice(list(moves.keys()))
+    
+    if moves.get(user_move) == joi_move:
+        reply = joi_move.capitalize() + '! Du vinner :)' 
+    elif moves.get(joi_move) == user_move:
+        reply = joi_move.capitalize() + '! Jag vinner :)' 
+    elif joi_move == user_move:
+        reply = joi_move.capitalize() + '! Det blev visst lika' 
+    else: 
+        reply = 'Jag tror inte det där var ett giltligt drag :/'
+
+    await client.send_message(message.channel, reply) 
 
 responseDict = {
     'test' : joi_test,
@@ -468,7 +504,10 @@ responseDict = {
     'teams' : joi_teams,
     'joke' : joi_scrape_joke,
     'gif' : joi_giphy,
-    'hs' : joi_hearthstone
+    'hs' : joi_hearthstone,
+    'sax' : joi_klunsa,
+    'påse' : joi_klunsa,
+    'sten' : joi_klunsa,
 
 }
 
