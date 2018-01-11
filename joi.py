@@ -248,7 +248,7 @@ async def joi_r6_stats(message, client):
     result_list = []
     stat_type = message.content.split(' ')[1]
 
-#Read credentials and players from external documents
+    #Read credentials and players from external documents
     with open('uplaycred.txt', 'r') as f:
         credentials = f.readlines()
     credentials = [x.strip() for x in credentials] 
@@ -263,8 +263,7 @@ async def joi_r6_stats(message, client):
 
     auth = r6sapi.Auth(credentials[0], credentials[1])
 
-
-#Get stats based on type
+    #Get stats based on type
     if stat_type != 'mystats' and stat_type != None:
         stat_func = r6statDict.get(stat_type)
         if stat_func == None:
@@ -303,8 +302,7 @@ async def joi_r6_stats(message, client):
                 result_list.append((key.capitalize(), str(value[1](value[0](p_operator)))))
             result_list.append((p_operator.statistic_name, str(p_operator.statistic)))
 
-
-#Create and return reply
+    #Create and return reply
     reply = 'Jag hörde att du ville ha lite statistik ' + '[ ' + stat_type.capitalize() + ' ' + second_paramter.capitalize() + ' ] :\n'     
     for stat in result_list:
         reply = reply + stat[0] + ' - ' + str(stat[1]) + '\n'
@@ -354,6 +352,22 @@ async def joi_scrape_joke(message, client):
         joke.append(line)
     for line in joke:
         reply = reply + line + '\n'
+    await client.send_message(message.channel, reply)
+
+async def joi_daily_deal(message, client):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"}
+    joke = []
+    reply = ''
+    page = 'http://store.steampowered.com/?l=swedish'
+
+    req = urlRequest.Request(page, headers = headers)
+    url = urlRequest.urlopen(req)
+    sourceCode = url.read()
+    soup = BeautifulSoup(sourceCode, 'html.parser')
+    daily_deal = soup.find('a', attrs={'class': 'daily_deal'})
+    daily_deal = daily_deal.get('href')
+
+    reply = 'Dagens deal på steam är: \n' + daily_deal
     await client.send_message(message.channel, reply)
 
 async def joi_teams(message, client):
@@ -508,6 +522,7 @@ responseDict = {
     'sax' : joi_klunsa,
     'påse' : joi_klunsa,
     'sten' : joi_klunsa,
+    'dd' : joi_daily_deal
 
 }
 

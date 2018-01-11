@@ -16,3 +16,4 @@ Vad behöver du hjälp med? Jag kan göra massa skoj saker, bara skriv 'joi, ' följ
  *gif <search> <0-25> - få den gif som bäst matchar ditt sökord. Om du inte vill ha en specifik gif bland sökresultaten får du en av de fem bästa. 
  *hs <**search card> - få tillbaka ett kort från Hearthstone. Om du skriver sök sen kortet så får du en lista på resultaten.
  *sax, påse, sten - spela ett parti sten, sax, påse med mig.
+ *dd - Dagens deal på steam. 
