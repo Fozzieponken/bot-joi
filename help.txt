@@ -17,3 +17,4 @@ Vad behöver du hjälp med? Jag kan göra massa skoj saker, bara skriv 'joi, ' följ
  *hs <**search card> - få tillbaka ett kort från Hearthstone. Om du skriver sök sen kortet så får du en lista på resultaten.
  *sax, påse, sten - spela ett parti sten, sax, påse med mig.
  *dd - Dagens deal på steam. 
+ *secret <**namn> - Hitta en hemlighet, kanske av en specifik användare?

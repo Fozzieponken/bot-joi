@@ -252,7 +252,7 @@ async def joi_r6_stats(message, client):
     with open('uplaycred.txt', 'r') as f:
         credentials = f.readlines()
     credentials = [x.strip() for x in credentials] 
-    with open('players.txt') as f:
+    with open('players.txt', 'r') as f:
         player_names = f.readlines()
     player_names = [x.strip() for x in player_names] 
 
@@ -493,6 +493,25 @@ async def joi_klunsa(message, client):
 
     await client.send_message(message.channel, reply) 
 
+async def joi_secret(message, client):
+    in_data = message.content.split(' ')
+
+    with open('secrets.txt', 'r') as f:
+        quotes = f.read().splitlines()
+    
+    if len(in_data) == 2:
+        temp = []
+        for e in quotes:
+            if in_data[1] in e:
+                temp.append(e)
+        quotes = temp
+
+    try:
+        reply = random.choice(quotes)
+    except Exception as e:
+        reply = 'Det fanns inga hemlighet här inte :3'
+    await client.send_message(message.channel, reply) 
+
 responseDict = {
     'test' : joi_test,
     'var' : joi_find,
@@ -522,7 +541,9 @@ responseDict = {
     'sax' : joi_klunsa,
     'påse' : joi_klunsa,
     'sten' : joi_klunsa,
-    'dd' : joi_daily_deal
+    'dd' : joi_daily_deal,
+    'secret' : joi_secret,
+    'hemlighet' : joi_secret
 
 }
 
@@ -588,6 +609,8 @@ async def on_message(message):
 
 @client.event
 async def on_message_delete(message):
+    with open('secrets.txt', 'a') as f:
+        f.write(message.content + ' - ' + message.author.name + '\n') 
     reply = random.choice(deleteArr)
     await client.send_message(message.channel, reply)
 
