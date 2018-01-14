@@ -70,12 +70,18 @@ global lock
 lock = False
 
 async def joi_test(message, client):  
-    tmp = await client.send_message(message.channel, 'Räknar meddelanden...')
-    counter = 0
-    async for log in client.logs_from(message.channel, limit=100):
-        if log.author == message.author:
-            counter += 1
-    await client.edit_message(tmp, 'Du har skrivit {} meddelanden senaste sessionen.'.format(counter))
+    # tmp = await client.send_message(message.channel, 'Räknar meddelanden...')
+    # counter = 0
+    # async for log in client.logs_from(message.channel, limit=100):
+    #     if log.author == message.author:
+    #         counter += 1
+    # await client.edit_message(tmp, 'Du har skrivit {} meddelanden senaste sessionen.'.format(counter))
+    reply = ''
+    i = 1
+    for e in foodArr:
+        reply += str(i) + ': ' + e + ' '
+        i += 1
+    await client.send_message(message.channel, reply)
 
 async def joi_hello(message, client): 
     reply = random.choice(welcomeArr) + message.author.name
@@ -426,12 +432,13 @@ async def joi_giphy(message, client):
     try: 
         # Search Endpoint
         api_response = api_instance.gifs_search_get(api_key, query, limit=limit, offset=offset, rating=rating, lang=lang, fmt=fmt)
-    except ApiException as e:
+        gif_images = api_response.data.pop(r)
+    except Exception as e:
         print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
         await client.send_message(message.channel, 'Oooops. Nått gick snett på andra sidan.')
         return
 
-    gif_images = api_response.data.pop(r)
+    
 
     await client.send_message(message.channel, gif_images.embed_url)
 
