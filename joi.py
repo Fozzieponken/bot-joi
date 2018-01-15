@@ -39,7 +39,7 @@ joiArr = ['Pratar ni om mig?', 'Hörde jag mitt namn?', 'Here to serve :)', ':no
 dogeArr = ['doge', 'doge2']
 teamArr = ['Klart!', 'Är det dags att visa vem som bestämmer?', 'Lite rivalitet har ingen dött av.', 'Lycka till!', 'Må bästa laget vinna :D', 'Lova att inte bråka för mycket nu :3']
 bladrunnerArr = ['Do you like our owl?', 'Is this testing whether I\'m a Replicant or a lesbian, Mr. Deckard?', 'Replicants are like any other machine. They\'re either a benefit or a hazard. If they\'re a benefit, it\'s not my problem.', 'Nothing is worse than having an itch you can never scratch.', 'I\'ve seen things you people wouldn\'t believe', 'All those ... moments will be lost in time, like tears...in rain.', ' Sometimes to love someone, you got to be a stranger.', '4 symbols make a man: A, T, G & C. I am only two: 1 and 0.', 'You look like a *good* Joe.',  'I\'ve never seen a tree. It\'s pretty.'];
-foodArr = ['\U0001F35E', '\U0001F356', '\U0001F9C0', '\U0001F357', '\U0001F969', '\U0001F953', '\U0001F354', '\U0001F355', '\U0001F96A', '\U0001F32E', '\U0001F32F', '\U0001F959', '\U0001F373', '\U0001F958', '\U0001F372', '\U0001F963', '\U0001F957', '\U0001F371', '\U0001F961', '\U0001F375'];
+foodArr = ['\U0001F35E', '\U0001F356', '\U0001F9C0', '\U0001F357', '\U0001F953', '\U0001F354', '\U0001F355', '\U0001F32E', '\U0001F32F', '\U0001F959', '\U0001F373', '\U0001F958', '\U0001F372', '\U0001F957', '\U0001F371', '\U0001F375'];
 
 soundDict = {
     'drum' : 'joke_drum_effect.mp3',
@@ -131,7 +131,7 @@ async def joi_play(message, client):
             await joi_come(message, client)
     else:
         await joi_come(message, client)
-    player = localVoiceClient.create_ffmpeg_player(sound)
+    player = localVoiceClient.create_ffmpeg_player('sounds/' + sound)
     player.start()
 
 async def joi_dice(message, client):
@@ -255,7 +255,7 @@ async def joi_r6_stats(message, client):
     stat_type = message.content.split(' ')[1]
 
     #Read credentials and players from external documents
-    with open('uplaycred.txt', 'r') as f:
+    with open('keys/uplaycred.txt', 'r') as f:
         credentials = f.readlines()
     credentials = [x.strip() for x in credentials] 
     with open('players.txt', 'r') as f:
@@ -403,22 +403,30 @@ async def joi_teams(message, client):
     for mem in new_team_text:
         team2 = team2 + mem.name + '\n'
     #await client.send_message(message.channel, random.choice(teamArr))
-    reply = '**Lag 1: **\n' + team1 + '**Lag 2: **\n' + team2
+    reply = '**Lag 1: **\n' + team1 + '**Lag 2: **\n' + team2 + '\n\n' + random.choice(teamArr)
     await client.send_message(message.channel, reply)
 
-async def joi_giphy(message, client): 
+def is_number(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
-    in_data = message.content.split(' ')
-   
-    if len(in_data) > 1:
-        query = in_data[1] # str | Search query term or prhase.
+async def joi_giphy(message, client): 
+    search_string = message.content[4:]
+
+    if is_number(search_string[-1:]):
+        r = int(search_string[-1:])
+        search_string = search_string[:-2]
+    else:
+        r = random.randint(0, 2)
+
+    if len(search_string) > 0:
+        query = search_string # str | Search query term or prhase.
     else:
         await client.send_message(message.channel, 'Vad vill du ha en gif på?')
         return
-    if len(in_data) == 3:
-        r = int(in_data[2])
-    else:
-        r = random.randint(0, 4)
 
     # create an instance of the API class
     api_instance = giphy_client.DefaultApi()
@@ -435,10 +443,8 @@ async def joi_giphy(message, client):
         gif_images = api_response.data.pop(r)
     except Exception as e:
         print("Exception when calling DefaultApi->gifs_search_get: %s\n" % e)
-        await client.send_message(message.channel, 'Oooops. Nått gick snett på andra sidan.')
+        await client.send_message(message.channel, 'Oooops. Nått gick snett på andra sidan. Gifen du letade efter kanske inte fanns :<')
         return
-
-    
 
     await client.send_message(message.channel, gif_images.embed_url)
 
@@ -458,7 +464,7 @@ async def joi_hearthstone(message, client):
         await client.send_message(message.channel, 'Vilket kort letade du efter sade du?')
         return
 
-    with open('hskey.txt', 'r') as f:
+    with open('keys/hskey.txt', 'r') as f:
         key = f.readline()
 
     req = requests.get(endpoint + card, headers={"X-Mashape-Key": key, "Accept": "application/json"})
@@ -626,6 +632,6 @@ async def on_member_join(member):
     reply = 'Hej hej ' + member.name + '! :)'
     await client.send_message(member.server.get_channel('246343097611583488'), reply)
 
-with open('discordkey.txt', 'r') as f:
+with open('keys/discordkey.txt', 'r') as f:
     key = f.readline()
 client.run(key)
