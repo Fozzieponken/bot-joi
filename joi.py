@@ -53,7 +53,10 @@ soundDict = {
     'spaghet' : 'spaghet.mp3',
     'spaghett' : 'spaghet.mp3',
     'spaget' : 'spaghet.mp3',
+    'skidaddle' : 'skidaddle.mp3',
+    'skidoodle' : 'skidaddle.mp3'
 }
+
 ubiDict = {
     '246342885853626369' : 'Beasterino',
     '246357307661746176' : 'DameValerie',
@@ -120,6 +123,9 @@ async def joi_sleep(message, client):
 
 async def joi_play(message, client):
     sound = soundDict.get(message.content.split(' ')[1])
+    if sound is None:
+        await client.send_message(message.channel, 'Vad ville du spela upp sade du?')
+        return
     global localVoiceClient
     global server
     callUser = discord.utils.find(lambda m: m.id == message.author.id, server.members)
@@ -185,7 +191,6 @@ async def joi_scrape_news(message, client):
                 break
     reply = 'Senaste nytt: \n**SvD**: ' + data.pop() + '\n**DN**: ' + data.pop() + '\n**Aftonbladet:** ' + data.pop() + '\n**Expressen:** ' + data.pop()
     await client.send_message(message.channel, reply)
-
 
 async def get_kills(player):
     return player.ranked.kills
