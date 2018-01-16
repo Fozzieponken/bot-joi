@@ -53,8 +53,6 @@ soundDict = {
     'spaghet' : 'spaghet.mp3',
     'spaghett' : 'spaghet.mp3',
     'spaget' : 'spaghet.mp3',
-    'skidaddle' : 'skidaddle.mp3',
-    'skidoodle' : 'skidaddle.mp3'
 }
 
 ubiDict = {
@@ -66,6 +64,8 @@ ubiDict = {
     '114389410069479424' : 'Pooze',
     '169075098257457152' : 'ThaC0w'
 }
+
+global lock
 global server
 global localVoiceClient
 localVoiceClient = None
@@ -121,6 +121,15 @@ async def joi_sleep(message, client):
         reply = random.choice(sleepArr)
         await client.send_message(message.channel, reply)
 
+def toggle_global_lock():
+    global lock
+    print(lock)
+    if lock is True:
+        lock = False
+    else:
+        lock = True
+
+
 async def joi_play(message, client):
     sound = soundDict.get(message.content.split(' ')[1])
     if sound is None:
@@ -128,6 +137,7 @@ async def joi_play(message, client):
         return
     global localVoiceClient
     global server
+    toggle_global_lock()
     callUser = discord.utils.find(lambda m: m.id == message.author.id, server.members)
     if callUser.voice.voice_channel is None:
         await client.send_message(message.channel, 'Du sitter ju inte ens i en röstkanal :/')
@@ -137,7 +147,7 @@ async def joi_play(message, client):
             await joi_come(message, client)
     else:
         await joi_come(message, client)
-    player = localVoiceClient.create_ffmpeg_player('sounds/' + sound)
+    player = localVoiceClient.create_ffmpeg_player(filename=('sounds/' + sound), after=toggle_global_lock)
     player.start()
 
 async def joi_dice(message, client):
@@ -583,7 +593,6 @@ async def on_message(message):
     if lock: 
         return
 
-    lock = True
     message.content = message.content.lower()
     randMess = random.randint(0, 7)
 
@@ -623,7 +632,6 @@ async def on_message(message):
     elif message.content.find('joi') > -1 and message.author.id != '386139218885476352' and randMess == 1:
         reply = random.choice(joiArr)
         await client.send_message(message.channel, reply)
-    lock = False
 
 @client.event
 async def on_message_delete(message):
