@@ -1,8 +1,10 @@
 import discord
 import asyncio
+import os
 import random
 import time
 import operator
+import sys
 import threading
 import r6sapi
 import json
@@ -86,6 +88,9 @@ async def joi_test(message, client):
         i += 1
     await client.send_message(message.channel, reply)
 
+async def joi_restart(meassage, client):
+    os.execl(sys.executable, sys.executable, *sys.argv)
+
 async def joi_hello(message, client): 
     reply = random.choice(welcomeArr) + message.author.name
     await client.send_message(message.channel, reply)
@@ -123,7 +128,6 @@ async def joi_sleep(message, client):
 
 def toggle_global_lock():
     global lock
-    print(lock)
     if lock is True:
         lock = False
     else:
@@ -143,8 +147,12 @@ async def joi_play(message, client):
         await client.send_message(message.channel, 'Du sitter ju inte ens i en röstkanal :/')
         return
     if hasattr(localVoiceClient, 'channel'):
-        if localVoiceClient.channel != message.author.voice.voice_channel:
-            await joi_come(message, client)
+        try:
+            if localVoiceClient.channel != message.author.voice.voice_channel:
+                await joi_come(message, client)
+        except Exception as e:
+            await client.send_message(message.channel, 'Ops, något gick hemskt snett. Jag startar om lite snabbt, prova igen om om ett par sekunder!')
+            joi_restart()
     else:
         await joi_come(message, client)
     player = localVoiceClient.create_ffmpeg_player(filename=('sounds/' + sound), after=toggle_global_lock)
@@ -322,6 +330,8 @@ async def joi_r6_stats(message, client):
             for key, value in parameterDictionary.items():
                 result_list.append((key.capitalize(), str(value[1](value[0](p_operator)))))
             result_list.append((p_operator.statistic_name, str(p_operator.statistic)))
+            print(p_operator.statistic_name)
+            print(p_operator.statistic)
 
     #Create and return reply
     reply = 'Jag hörde att du ville ha lite statistik ' + '[ ' + stat_type.capitalize() + ' ' + second_paramter.capitalize() + ' ] :\n'     
@@ -571,7 +581,8 @@ responseDict = {
     'sten' : joi_klunsa,
     'dd' : joi_daily_deal,
     'secret' : joi_secret,
-    'hemlighet' : joi_secret
+    'hemlighet' : joi_secret,
+    'restart' : joi_restart
 
 }
 
