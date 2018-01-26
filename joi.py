@@ -582,7 +582,8 @@ responseDict = {
     'dd' : joi_daily_deal,
     'secret' : joi_secret,
     'hemlighet' : joi_secret,
-    'restart' : joi_restart
+    'restart' : joi_restart,
+    'reset' : joi_restart
 
 }
 
